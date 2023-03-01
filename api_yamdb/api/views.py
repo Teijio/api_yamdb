@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, viewsets
@@ -59,7 +60,7 @@ class TokenReceiveViewSet(CreateViewSet):
             return Response(message, status=status.HTTP_400_BAD_REQUEST)
         message = {"token": str(AccessToken.for_user(user))}
         return Response(message, status=status.HTTP_200_OK)
- 
+
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
@@ -71,7 +72,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
             Title,
             pk=self.kwargs.get('title_id')
         )
-# 
+#
     def get_queryset(self):
         title = self.get_parent_title()
         return title.reviews.all()

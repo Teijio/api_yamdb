@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework.validators import UniqueTogetherValidator
@@ -52,7 +53,7 @@ class UserSerializer(serializers.ModelSerializer):
         if username == "me":
             raise serializers.ValidationError("Использовать имя me запрещено")
         return username
- 
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     text = serializers.CharField(required=True)
