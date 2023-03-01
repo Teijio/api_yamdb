@@ -1,3 +1,15 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Review, Comment
+
+
+class ReviewAdmin(admin.ModelAdmin):
+    pass
+
+
+class CommentAdmin(admin.ModelAdmin):
+    pass
+
+
+admin.site.register(Review, ReviewAdmin)
+admin.site.register(Comment, CommentAdmin)
