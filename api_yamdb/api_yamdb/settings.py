@@ -95,13 +95,12 @@ USE_TZ = True
 
 
 STATIC_URL = "/static/"
-
 STATICFILES_DIRS = ((BASE_DIR / "static/"),)
 
 AUTH_USER_MODEL = "users.User"
 
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_emails")
 
 REST_FRAMEWORK = {
@@ -119,3 +118,16 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+
+LENGTH_USERNAME = 20
+USERS_PER_PAGE = 20
+
+EMAIL_YAMDB = "yamdb_registration_confirm@mail.ru"
+
+# EMAIL_HOST = "smtp.mail.ru"
+# EMAIL_PORT = 2525
+# EMAIL_HOST_USER = EMAIL_YAMDB
+# EMAIL_HOST_PASSWORD = "G75JwanJi7iatbQBHSVu"
+# EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = False
