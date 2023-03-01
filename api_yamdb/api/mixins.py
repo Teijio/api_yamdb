@@ -12,4 +12,3 @@ class CreateListViewSet(
     mixins.CreateModelMixin, mixins.ListModelMixin, GenericViewSet
 ):
     pass
-

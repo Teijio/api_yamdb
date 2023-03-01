@@ -10,6 +10,7 @@ from reviews.models import (
 
 User = get_user_model()
 
+
 class UserCreateSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         required=True,
@@ -57,30 +58,23 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     text = serializers.CharField(required=True)
-    author = serializers.SlugRelatedField(
-        slug_field='author',
-        read_only=True
-    )
+    author = serializers.SlugRelatedField(slug_field="author", read_only=True)
 
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = "__all__"
         # Согласно ТЗ необходимо, чтобы соблюдалось условие:
         # == "1 отзыв для 1 произведения от 1 автора" ==
         validators = [
             UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=['author', 'title']
+                queryset=Review.objects.all(), fields=["author", "title"]
             )
         ]
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(
-        slug_field='author',
-        read_only=True
-    )
+    author = serializers.SlugRelatedField(slug_field="author", read_only=True)
 
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = "__all__"
