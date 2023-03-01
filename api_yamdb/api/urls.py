@@ -19,5 +19,5 @@ router_v1.register(
     CommentViewSet, basename='title-review-comments')
 
 urlpatterns = [
-    path('', include(router_v1.urls)),
+    path('v1/', include(router_v1.urls)),
 ]
