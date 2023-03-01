@@ -4,9 +4,7 @@ from rest_framework.validators import UniqueValidator
 from users.models import User
 
 
-
-
-class SignUpSerializer(serializers.ModelSerializer):
+class UserCreateSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all())],
@@ -22,22 +20,16 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     def validate_username(self, value):
         if value.lower() == "me":
-            raise serializers.ValidationError(
-                "Использовать имя me запрещено"
-            )
+            raise serializers.ValidationError("Использовать имя me запрещено")
         return value
 
 
 class TokenSerializer(serializers.Serializer):
     username = serializers.RegexField(
-        regex=r'^[\w.@+-]+$',
-        max_length=150,
-        required=True
+        regex=r"^[\w.@+-]+$", max_length=150, required=True
     )
-    confirmation_code = serializers.CharField(
-        max_length=150,
-        required=True
-    )
+    confirmation_code = serializers.CharField(max_length=150, required=True)
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
