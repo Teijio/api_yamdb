@@ -119,3 +119,8 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+
+LENGTH_USERNAME = 20
+# LIST_PER_PAGE = 10
+# EMAIL_YAMDB = "yamdb_registration_confirm@mailю.ru"
