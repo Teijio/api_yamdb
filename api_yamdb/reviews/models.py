@@ -16,18 +16,18 @@ class ReviewBaseModel(models.Model):
 
 
 class Genre(models.Model):
-    name = models.CharField(unique=True, max_length=256)
+    name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True, max_length=50)
 
 
 class Category(models.Model):
-    name = models.CharField(unique=True, max_length=256)
+    name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True, max_length=50)
 
 
 class Title(models.Model):
-    name = models.CharField(unique=True, max_length=256)
-    year = models.IntegerField(unique=True)
+    name = models.CharField(max_length=256)
+    year = models.IntegerField()
     description = models.TextField()
     genre = models.ManyToManyField(
         Genre,
