@@ -4,7 +4,12 @@ from rest_framework.viewsets import (
 )
 
 
-class CreateViewSet(
-    mixins.CreateModelMixin, GenericViewSet
+class CreateViewSet(mixins.CreateModelMixin, GenericViewSet):
+    pass
+
+
+class CreateListViewSet(
+    mixins.CreateModelMixin, mixins.ListModelMixin, GenericViewSet
 ):
     pass
+

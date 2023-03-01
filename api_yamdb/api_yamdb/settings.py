@@ -121,4 +121,12 @@ SIMPLE_JWT = {
 
 LENGTH_USERNAME = 20
 USERS_PER_PAGE = 20
-# EMAIL_YAMDB = "yamdb_registration_confirm@mail.ru"
+
+EMAIL_YAMDB = "yamdb_registration_confirm@mail.ru"
+
+# EMAIL_HOST = "smtp.mail.ru"
+# EMAIL_PORT = 465 
+# EMAIL_HOST_USER = EMAIL_YAMDB
+# EMAIL_HOST_PASSWORD = "G75JwanJi7iatbQBHSVu"
+# EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = False
