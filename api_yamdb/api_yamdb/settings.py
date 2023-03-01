@@ -95,13 +95,11 @@ USE_TZ = True
 
 
 STATIC_URL = "/static/"
-
 STATICFILES_DIRS = ((BASE_DIR / "static/"),)
 
 AUTH_USER_MODEL = "users.User"
 
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_emails")
 
 REST_FRAMEWORK = {
@@ -122,5 +120,5 @@ SIMPLE_JWT = {
 
 
 LENGTH_USERNAME = 20
-# LIST_PER_PAGE = 10
-# EMAIL_YAMDB = "yamdb_registration_confirm@mailю.ru"
+USERS_PER_PAGE = 20
+# EMAIL_YAMDB = "yamdb_registration_confirm@mail.ru"

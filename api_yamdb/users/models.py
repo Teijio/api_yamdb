@@ -22,7 +22,7 @@ class User(AbstractUser):
         verbose_name="Имя пользователя",
         validators=[
             RegexValidator(
-                regex=r"^[\w.@+-]+\z",
+                regex=r"^[\w.@+-]+$",
                 message="Имя пользователя содержит недопустимый символ",
             ),
         ],

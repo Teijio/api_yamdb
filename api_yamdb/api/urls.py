@@ -7,4 +7,6 @@ router_v1 = routers.DefaultRouter()
 
 urlpatterns = [
     path("v1/", include(router_v1.urls)),
+    path("v1/signup/", include(router_v1.urls)),
+    path("v1/token/", include(router_v1.urls)),
 ]
