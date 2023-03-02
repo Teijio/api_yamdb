@@ -11,7 +11,7 @@ from .views import (
 )
 
 router_v1 = routers.DefaultRouter()
-# router_v1.register(r"users", UserViewSet)
+router_v1.register(r"users", UserViewSet)
 # router_v1.register(r'titles', TitleViewSet, basename='titles')
 router_v1.register(
     r"titles/(?P<title_id>\d+)/reviews",
