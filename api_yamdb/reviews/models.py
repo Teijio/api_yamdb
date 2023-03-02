@@ -32,17 +32,13 @@ class Title(models.Model):
     description = models.TextField()
     genre = models.ManyToManyField(
         Genre,
-        # on_delete=models.SET_NULL,
-        related_name="reviews",
-        # unique=True
-        # null=True
+        related_name="titles",
     )
-    category = models.ManyToManyField(
+    category = models.ForeignKey(
         Category,
-        # on_delete=models.SET_NULL,
-        related_name="reviews",
-        # unique=True
-        # null=True
+        on_delete=models.SET_NULL,
+        related_name="titles",
+        null=True
     )
 
 

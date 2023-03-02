@@ -1,9 +1,11 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import (
+    Title,
     Review,
     Comment,
 )
@@ -56,6 +58,22 @@ class UserSerializer(serializers.ModelSerializer):
         return username
 
 
+class TitleSerializer(serializers.ModelSerializer):
+    rating = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Title
+        fields = "__all__"
+
+    def get_rating(self, instance):
+        if instance.reviews.count() == 0:
+            return None
+        return int(round(
+            number=instance.reviews.aggregate(Avg('score'))['score__avg'],
+            ndigits=0
+        ))
+
+
 class ReviewSerializer(serializers.ModelSerializer):
     text = serializers.CharField(required=True)
     author = serializers.SlugRelatedField(slug_field="author", read_only=True)
@@ -73,6 +91,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    text = serializers.CharField(required=True)
     author = serializers.SlugRelatedField(slug_field="author", read_only=True)
 
     class Meta:
