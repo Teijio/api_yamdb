@@ -125,6 +125,7 @@ class Review(ReviewBaseModel):
     class Meta:
         verbose_name = "Отзыв"
         verbose_name_plural = "Отзывы"
+        unique_together = ('title', 'author')
 
     def __str__(self):
         return f"{self.text[:LENGTH_TEXT]}"

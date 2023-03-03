@@ -3,7 +3,7 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
+from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import (
     Title,
@@ -130,26 +130,21 @@ class TitleGetSerializer(TitleBaseSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Review."""
-
     text = serializers.CharField(required=True)
-    author = serializers.SlugRelatedField(slug_field="author", read_only=True)
+    author = serializers.SlugRelatedField(
+        slug_field='username', read_only=True)
 
     class Meta:
         model = Review
-        fields = "__all__"
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Review.objects.all(), fields=["author", "title"]
-            )
-        ]
+        fields = ["id", "text", "author", "score", "pub_date"]
 
 
 class CommentSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Comment."""
-
     text = serializers.CharField(required=True)
-    author = serializers.SlugRelatedField(slug_field="author", read_only=True)
+    author = serializers.SlugRelatedField(
+        slug_field="username", read_only=True)
 
     class Meta:
         model = Comment
-        fields = "__all__"
+        fields = ["id", "text", "author", "pub_date"]

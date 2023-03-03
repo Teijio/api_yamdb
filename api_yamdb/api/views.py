@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, permissions, status, viewsets, mixins
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -23,17 +23,18 @@ from reviews.models import (
     Title,
     Category,
     Genre,
+    Review,
 )
 from .mixins import (
     CreateViewSet,
-    CreateListViewSet,
+    # CreateListViewSet,
     ModelViewSetWithoutRetrieve,
 )
 from .utils import send_confirmation_code
 from .permissions import (
     AdminOnly,
     AuthorOrModeratorOrAdmin,
-    IsAuthor,
+    # IsAuthor,
     ReadOnly,
 )
 from .filters import TitleFilter
@@ -147,26 +148,41 @@ class GenreViewSet(ModelViewSetWithoutRetrieve):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (
-        IsAuthenticated,
-        AuthorOrModeratorOrAdmin,
-    )
 
     def get_parent_title(self):
-        return get_object_or_404(Title, pk=self.kwargs.get("title_id"))
+        return get_object_or_404(Title, pk=int(self.kwargs.get("title_id")))
 
     def get_queryset(self):
         title = self.get_parent_title()
         return title.reviews.all()
 
+    def create(self, request, *args, **kwargs):
+        reviews = Review.objects.filter(
+            author=self.request.user,
+            title=self.get_parent_title(),
+        )
+        if len(reviews) != 0:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         title = self.get_parent_title()
-        serializer.save(author=self.request.user, title=title)
+        serializer.save(
+            author=self.request.user,
+            title=title)
+
+    def get_permissions(self):
+        if self.action in ["list", "retrieve"]:
+            permission_classes = [AllowAny]
+        elif self.action == "create":
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated, AuthorOrModeratorOrAdmin]
+        return [permission() for permission in permission_classes]
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (AuthorOrModeratorOrAdmin,)
 
     def get_parent_review(self):
         title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
@@ -181,3 +197,12 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         review = self.get_parent_review()
         serializer.save(author=self.request.user, review=review)
+
+    def get_permissions(self):
+        if self.action in ["list", "retrieve"]:
+            permission_classes = [AllowAny]
+        elif self.action == "create":
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated, AuthorOrModeratorOrAdmin]
+        return [permission() for permission in permission_classes]
