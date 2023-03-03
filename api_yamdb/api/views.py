@@ -24,9 +24,18 @@ from reviews.models import (
     Category,
     Genre,
 )
-from .mixins import CreateViewSet, CreateListViewSet
+from .mixins import (
+    CreateViewSet,
+    CreateListViewSet,
+    ModelViewSetWithoutRetrieve,
+)
 from .utils import send_confirmation_code
-from .permissions import AdminOnly, AuthorOrModeratorOrAdmin, IsAuthor
+from .permissions import (
+    AdminOnly,
+    AuthorOrModeratorOrAdmin,
+    IsAuthor,
+    ReadOnly,
+)
 from .filters import TitleFilter
 
 User = get_user_model()
@@ -74,8 +83,11 @@ class TokenReceiveViewSet(CreateViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated, AdminOnly,)
-    filter_backends = (filters.SearchFilter,)
+    permission_classes = (
+        IsAuthenticated,
+        AdminOnly,
+    )
+    filter_backends = [filters.SearchFilter]
     search_fields = ("username",)
     lookup_field = "username"
 
@@ -97,55 +109,35 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+    permission_classes = [ReadOnly | AdminOnly]
     queryset = Title.objects.all()
     filter_backends = [DjangoFilterBackend]
     filterset_class = TitleFilter
 
-    def get_permissions(self):
-        if self.action == 'list' or self.action == 'retrieve':
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAuthenticated, AdminOnly]
-        return [permission() for permission in permission_classes]
-
     def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'retrieve':
+        if self.action in ["list", "retrieve"]:
             return TitleGetSerializer
         return TitlePostSerializer
 
 
-class CategoryViewSet(
-        mixins.ListModelMixin,
-        mixins.CreateModelMixin,
-        mixins.DestroyModelMixin,
-        viewsets.GenericViewSet):
+class CategoryViewSet(ModelViewSetWithoutRetrieve):
+    permission_classes = [ReadOnly | AdminOnly]
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    lookup_field = 'slug'
+    lookup_field = "slug"
     filter_backends = [filters.SearchFilter]
-    search_fields = ('name',)
-
-    def get_permissions(self):
-        if self.action == 'list' or self.action == 'retrieve':
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAuthenticated, AdminOnly]
-        return [permission() for permission in permission_classes]
+    search_fields = ("name",)
 
 
-class GenreViewSet(
-        mixins.ListModelMixin,
-        mixins.CreateModelMixin,
-        mixins.DestroyModelMixin,
-        viewsets.GenericViewSet):
+class GenreViewSet(ModelViewSetWithoutRetrieve):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    lookup_field = 'slug'
+    lookup_field = "slug"
     filter_backends = [filters.SearchFilter]
-    search_fields = ('name',)
+    search_fields = ("name",)
 
     def get_permissions(self):
-        if self.action == 'list':
+        if self.action == "list":
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated, AdminOnly]
@@ -154,8 +146,10 @@ class GenreViewSet(
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    http_method_names = ["get", "post", "patch", "delete"]
-    permission_classes = (AuthorOrModeratorOrAdmin,)
+    permission_classes = (
+        IsAuthenticated,
+        AuthorOrModeratorOrAdmin,
+    )
 
     def get_parent_title(self):
         return get_object_or_404(Title, pk=self.kwargs.get("title_id"))
@@ -168,20 +162,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
         title = self.get_parent_title()
         serializer.save(author=self.request.user, title=title)
 
-    def get_permissions(self):
-        if self.action == 'list' or self.action == 'retrieve':
-            permission_classes = [AllowAny]
-        elif self.action == 'create':
-            permission_classes = [IsAuthenticated]
-        elif self.action == 'update':
-            permission_classes = [IsAuthenticated,
-                                  IsAuthor, IsModerator, AdminOnly]
-        return [permission() for permission in permission_classes]
-
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    http_method_names = ["get", "post", "patch", "delete"]
     permission_classes = (AuthorOrModeratorOrAdmin,)
 
     def get_parent_review(self):

@@ -120,7 +120,7 @@ SIMPLE_JWT = {
 }
 
 
-LENGTH_USERNAME = 20
+LENGTH_TEXT = 20
 USERS_PER_PAGE = 20
 
 EMAIL_YAMDB = "yamdb_registration_confirm@mail.ru"

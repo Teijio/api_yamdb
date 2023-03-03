@@ -2,10 +2,12 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
 
-from api_yamdb.settings import LENGTH_USERNAME
+from api_yamdb.settings import LENGTH_TEXT
 
 
 class User(AbstractUser):
+    """Класс пользователей."""
+
     ROLES = (
         ("user", "Пользователь"),
         ("moderator", "Модератор"),
@@ -15,7 +17,7 @@ class User(AbstractUser):
     moderator = "moderator"
     admin = "admin"
     username = models.CharField(
-        max_length=255,
+        max_length=150,
         unique=True,
         db_index=True,
         blank=False,
@@ -28,7 +30,10 @@ class User(AbstractUser):
         ],
     )
     email = models.EmailField(
-        max_length=254, unique=True, blank=False, verbose_name="email"
+        max_length=254,
+        unique=True,
+        blank=False,
+        verbose_name="Электронный почтовый ящик",
     )
     first_name = models.CharField(
         max_length=150, verbose_name="Имя", blank=True
@@ -38,7 +43,7 @@ class User(AbstractUser):
     )
     bio = models.TextField(
         blank=True,
-        verbose_name="Описание",
+        verbose_name="Описание пользователя",
     )
     role = models.CharField(
         default=user,
@@ -58,7 +63,7 @@ class User(AbstractUser):
         ordering = ("id",)
 
     def __str__(self):
-        return self.username[:LENGTH_USERNAME]
+        return self.username[:LENGTH_TEXT]
 
     @property
     def is_user(self):

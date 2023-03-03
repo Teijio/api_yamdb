@@ -13,11 +13,7 @@ from reviews.models import (
     Comment,
     GenreTitle,
 )
-from .mixins import (
-    NameValidationMixin,
-    SlugValidationMixin,
-    YearValidationMixin,
-)
+import datetime
 
 
 User = get_user_model()
@@ -68,74 +64,83 @@ class UserSerializer(serializers.ModelSerializer):
         return username
 
 
-class CategorySerializer(NameValidationMixin,
-                         SlugValidationMixin,
-                         serializers.ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        exclude = ['id']
+        exclude = ["id"]
 
 
-class GenreSerializer(NameValidationMixin,
-                      SlugValidationMixin,
-                      serializers.ModelSerializer):
+class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        exclude = ['id']
+        exclude = ["id"]
 
 
-class TitleBaseSerializer(NameValidationMixin,
-                          YearValidationMixin,
-                          serializers.ModelSerializer):
+class TitleBaseSerializer(serializers.ModelSerializer):
     """Базовый сериализатор для модели Title."""
+
     rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
-        fields = ['id', 'name', 'year',
-                  'rating', 'description', 'genre', 'category']
+        fields = [
+            "id",
+            "name",
+            "year",
+            "rating",
+            "description",
+            "genre",
+            "category",
+        ]
 
     def get_rating(self, instance):
         if instance.reviews.count() == 0:
             return None
-        return int(round(
-            number=instance.reviews.aggregate(Avg('score'))['score__avg'],
-            ndigits=0
-        ))
+        return int(
+            round(
+                number=instance.reviews.aggregate(Avg("score"))["score__avg"],
+                ndigits=0,
+            )
+        )
+
+    def validate_year(self, value):
+        if value > datetime.datetime.now().year:
+            raise serializers.ValidationError("Указанный год еще не наступил")
+        return value
 
 
 class TitlePostSerializer(TitleBaseSerializer):
     """Сериализатор для post-запросов модели Title."""
+
     genre = serializers.SlugRelatedField(
-        queryset=Genre.objects.all(),
-        slug_field='slug',
-        many=True
+        queryset=Genre.objects.all(), slug_field="slug", many=True
     )
     category = serializers.SlugRelatedField(
         queryset=Category.objects.all(),
-        slug_field='slug',
+        slug_field="slug",
     )
 
     def create(self, validated_data):
-        if 'genre' not in self.initial_data:
+        if "genre" not in self.initial_data:
             raise serializers.ValidationError("Поле genre не найдено")
-        genres = validated_data.pop('genre')
+        genres = validated_data.pop("genre")
         title = Title.objects.create(**validated_data)
         for genre in genres:
             current_genre = get_object_or_404(Genre, slug=genre)
-            GenreTitle.objects.create(
-                genre=current_genre, title=title)
+            GenreTitle.objects.create(genre=current_genre, title=title)
         return title
 
 
 class TitleGetSerializer(TitleBaseSerializer):
     """Сериализатор для get-запросов модели Title."""
+
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Review."""
+
     text = serializers.CharField(required=True)
     author = serializers.SlugRelatedField(slug_field="author", read_only=True)
 
@@ -151,6 +156,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Comment."""
+
     text = serializers.CharField(required=True)
     author = serializers.SlugRelatedField(slug_field="author", read_only=True)
 

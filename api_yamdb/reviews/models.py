@@ -1,7 +1,9 @@
 from django.db import models
 from django.core import validators
 from django.contrib.auth import get_user_model
+from django.core.validators import RegexValidator
 
+from api_yamdb.settings import LENGTH_TEXT
 
 User = get_user_model()
 
@@ -9,46 +11,83 @@ User = get_user_model()
 class ReviewBaseModel(models.Model):
     """Абстрактная базовая модель для Review и Comment."""
 
-    text = models.TextField()
-    pub_date = models.DateTimeField(auto_now_add=True)
+    text = models.TextField(
+        verbose_name="Текст комментария/отзыва",
+    )
+    pub_date = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        verbose_name="Дата публикации",
+    )
 
     class Meta:
         abstract = True
 
 
-class Genre(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(unique=True, max_length=50)
+class GenreCategoryBaseModel(models.Model):
+    name = models.CharField(
+        max_length=256,
+        db_index=True,
+        verbose_name="Название категории",
+    )
+    slug = models.SlugField(
+        unique=True,
+        max_length=50,
+        verbose_name="Идентификатор категории",
+        validators=[
+            RegexValidator(
+                regex=r"^[-a-zA-Z0-9_]+$",
+                message="Идентификатор содержит недопустимый символ",
+            ),
+        ],
+    )
+
+    class Meta:
+        abstract = True
+
+
+class Genre(GenreCategoryBaseModel):
+    """Модель для жанров."""
 
     def __str__(self):
-        return f'{self.slug}'
+        return f"{self.slug}"
 
 
-class Category(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(unique=True, max_length=50)
+class Category(GenreCategoryBaseModel):
+    """Модель для категорий."""
 
     def __str__(self):
-        return f'{self.slug}'
+        return f"{self.slug}"
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=256)
-    year = models.IntegerField()
-    description = models.TextField()
+    """Модель для произведений."""
+
+    name = models.CharField(
+        max_length=256,
+        verbose_name="Название произведения",
+    )
+    year = models.IntegerField(
+        verbose_name="Год издания произведения",
+    )
+    description = models.TextField(
+        verbose_name="Описание произведения",
+    )
     genre = models.ManyToManyField(
         Genre,
-        through='GenreTitle',
+        through="GenreTitle",
+        verbose_name="Жанры произведения",
     )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
         related_name="titles",
-        null=True
+        null=True,
+        verbose_name="Категории произведения",
     )
 
     def __str__(self):
-        return f'{self.name}'
+        return f"{self.name}"
 
 
 class GenreTitle(models.Model):
@@ -56,24 +95,31 @@ class GenreTitle(models.Model):
     genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.title} {self.genre}'
+        return f"{self.title} {self.genre}"
 
 
 class Review(ReviewBaseModel):
     """Модель отзыва к произведениям Title."""
 
     title = models.ForeignKey(
-        Title, on_delete=models.CASCADE, related_name="reviews"
+        Title,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+        verbose_name="Произведение",
     )
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="reviews"
+        User,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+        verbose_name="Автор произведения",
     )
     score = models.IntegerField(
-        default=10,
+        default=0,
         validators=[
             validators.MaxValueValidator(10),
             validators.MinValueValidator(1),
         ],
+        verbose_name="Оценка произведения",
     )
 
     class Meta:
@@ -81,17 +127,23 @@ class Review(ReviewBaseModel):
         verbose_name_plural = "Отзывы"
 
     def __str__(self):
-        return f'{self.text[:50]}'
+        return f"{self.text[:LENGTH_TEXT]}"
 
 
 class Comment(ReviewBaseModel):
     """Модель комментария к отзыву Review."""
 
     review = models.ForeignKey(
-        Review, on_delete=models.CASCADE, related_name="comments"
+        Review,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        verbose_name="Комментарий",
     )
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="comments"
+        User,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        verbose_name="Автор комментария",
     )
 
     class Meta:
@@ -99,4 +151,4 @@ class Comment(ReviewBaseModel):
         verbose_name_plural = "Комментарии"
 
     def __str__(self):
-        return f'{self.text[:50]}'
+        return f"{self.text[:LENGTH_TEXT]}"
