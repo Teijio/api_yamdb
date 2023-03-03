@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import filters, permissions, status, viewsets, mixins
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -24,9 +24,9 @@ from reviews.models import (
     Category,
     Genre,
 )
-from .mixins import CreateViewSet
+from .mixins import CreateViewSet, CreateListViewSet
 from .utils import send_confirmation_code
-from .permissions import AdminOnly, IsAuthor, IsModerator
+from .permissions import AdminOnly, AuthorOrModeratorOrAdmin, IsAuthor
 from .filters import TitleFilter
 
 User = get_user_model()
@@ -155,6 +155,7 @@ class GenreViewSet(
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     http_method_names = ["get", "post", "patch", "delete"]
+    permission_classes = (AuthorOrModeratorOrAdmin,)
 
     def get_parent_title(self):
         return get_object_or_404(Title, pk=self.kwargs.get("title_id"))
@@ -181,6 +182,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     http_method_names = ["get", "post", "patch", "delete"]
+    permission_classes = (AuthorOrModeratorOrAdmin,)
 
     def get_parent_review(self):
         title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
