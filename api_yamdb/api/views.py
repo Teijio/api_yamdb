@@ -1,27 +1,33 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets, mixins
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import action, api_view
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .serializers import (
     TokenSerializer,
     UserCreateSerializer,
     UserSerializer,
+    TitlePostSerializer,
+    TitleGetSerializer,
+    CategorySerializer,
+    GenreSerializer,
     ReviewSerializer,
     CommentSerializer,
 )
 from reviews.models import (
     Title,
-    # Review,
-    # Comment,
+    Category,
+    Genre,
 )
 from .mixins import CreateViewSet, CreateListViewSet
 from .utils import send_confirmation_code
-from .permissions import AdminOnly, AuthorOrModeratorOrAdmin
+from .permissions import AdminOnly, AuthorOrModeratorOrAdmin, IsAuthor
+from .filters import TitleFilter
 
 User = get_user_model()
 
@@ -68,7 +74,7 @@ class TokenReceiveViewSet(CreateViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (AdminOnly,)
+    permission_classes = (IsAuthenticated, AdminOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ("username",)
     lookup_field = "username"
@@ -90,6 +96,62 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TitleFilter
+
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated, AdminOnly]
+        return [permission() for permission in permission_classes]
+
+    def get_serializer_class(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return TitleGetSerializer
+        return TitlePostSerializer
+
+
+class CategoryViewSet(
+        mixins.ListModelMixin,
+        mixins.CreateModelMixin,
+        mixins.DestroyModelMixin,
+        viewsets.GenericViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    lookup_field = 'slug'
+    filter_backends = [filters.SearchFilter]
+    search_fields = ('name',)
+
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated, AdminOnly]
+        return [permission() for permission in permission_classes]
+
+
+class GenreViewSet(
+        mixins.ListModelMixin,
+        mixins.CreateModelMixin,
+        mixins.DestroyModelMixin,
+        viewsets.GenericViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    lookup_field = 'slug'
+    filter_backends = [filters.SearchFilter]
+    search_fields = ('name',)
+
+    def get_permissions(self):
+        if self.action == 'list':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated, AdminOnly]
+        return [permission() for permission in permission_classes]
+
+
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     http_method_names = ["get", "post", "patch", "delete"]
@@ -98,7 +160,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def get_parent_title(self):
         return get_object_or_404(Title, pk=self.kwargs.get("title_id"))
 
-    #
     def get_queryset(self):
         title = self.get_parent_title()
         return title.reviews.all()
@@ -106,6 +167,16 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         title = self.get_parent_title()
         serializer.save(author=self.request.user, title=title)
+
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            permission_classes = [AllowAny]
+        elif self.action == 'create':
+            permission_classes = [IsAuthenticated]
+        elif self.action == 'update':
+            permission_classes = [IsAuthenticated,
+                                  IsAuthor, IsModerator, AdminOnly]
+        return [permission() for permission in permission_classes]
 
 
 class CommentViewSet(viewsets.ModelViewSet):
