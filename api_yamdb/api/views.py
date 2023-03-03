@@ -5,7 +5,10 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import action, api_view
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (
+    IsAuthenticated,
+    AuthorOrModeratorOrAdmin,
+)
 
 from .serializers import (
     TokenSerializer,
@@ -93,7 +96,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     http_method_names = ["get", "post", "patch", "delete"]
-    # permission_classes = []
+    permission_classes = (AuthorOrModeratorOrAdmin,)
 
     def get_parent_title(self):
         return get_object_or_404(Title, pk=self.kwargs.get("title_id"))
@@ -111,7 +114,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     http_method_names = ["get", "post", "patch", "delete"]
-    # permission_classes = []
+    permission_classes = (AuthorOrModeratorOrAdmin,)
 
     def get_parent_review(self):
         title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
