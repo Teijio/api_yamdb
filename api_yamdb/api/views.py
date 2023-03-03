@@ -5,10 +5,7 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import action, api_view
-from rest_framework.permissions import (
-    IsAuthenticated,
-    AuthorOrModeratorOrAdmin,
-)
+from rest_framework.permissions import IsAuthenticated
 
 from .serializers import (
     TokenSerializer,
@@ -24,7 +21,7 @@ from reviews.models import (
 )
 from .mixins import CreateViewSet, CreateListViewSet
 from .utils import send_confirmation_code
-from .permissions import AdminOnly
+from .permissions import AdminOnly, AuthorOrModeratorOrAdmin
 
 User = get_user_model()
 
