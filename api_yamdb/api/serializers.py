@@ -19,19 +19,9 @@ import datetime
 User = get_user_model()
 
 
-class UserCreateSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())],
-    )
-    email = serializers.EmailField(
-        required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())],
-    )
-
-    class Meta:
-        fields = ("username", "email")
-        model = User
+class UserCreateSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=254, required=True)
+    username = serializers.RegexField(regex=r'^[\w.@+-]+\Z', max_length=150)
 
     def validate_username(self, value):
         if value.lower() == "me":
