@@ -4,10 +4,6 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
-# from rest_framework.response import Response
-
-import re
-import datetime
 
 from reviews.models import (
     Title,
@@ -16,6 +12,11 @@ from reviews.models import (
     Review,
     Comment,
     GenreTitle,
+)
+from .mixins import (
+    NameValidationMixin,
+    SlugValidationMixin,
+    YearValidationMixin,
 )
 
 
@@ -67,54 +68,53 @@ class UserSerializer(serializers.ModelSerializer):
         return username
 
 
-class CategorySerializer(serializers.ModelSerializer):
-    # name = serializers.CharField(required=True)
-    # slug = serializers.CharField(required=True)
-
+class CategorySerializer(NameValidationMixin,
+                         SlugValidationMixin,
+                         serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['name', 'slug']
-
-    def validate_slug(self, value):
-        if not re.match(r"^[-a-zA-Z0-9_]+$", value) or len(value) > 50:
-            raise serializers.ValidationError(
-                "Поле slug не соответствует паттерну")
-        return value
-
-    def validate_name(self, value):
-        if len(value) > 256:
-            raise serializers.ValidationError(
-                "Поле name длиннее 256 символов")
-        return value
+        exclude = ['id']
 
 
-class GenreSerializer(serializers.ModelSerializer):
+class GenreSerializer(NameValidationMixin,
+                      SlugValidationMixin,
+                      serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = ['name', 'slug']
-
-    def validate_slug(self, value):
-        if not re.match(r"^[-a-zA-Z0-9_]+$", value) or len(value) > 50:
-            raise serializers.ValidationError(
-                "Поле slug не соответствует паттерну")
-        return value
-
-    def validate_name(self, value):
-        if len(value) > 256:
-            raise serializers.ValidationError(
-                "Поле name длиннее 256 символов")
-        return value
+        exclude = ['id']
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class TitleBaseSerializer(NameValidationMixin,
+                          YearValidationMixin,
+                          serializers.ModelSerializer):
+    """Базовый сериализатор для модели Title."""
     rating = serializers.SerializerMethodField()
-    genre = GenreSerializer(many=True)
-    category = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Title
         fields = ['id', 'name', 'year',
                   'rating', 'description', 'genre', 'category']
+
+    def get_rating(self, instance):
+        if instance.reviews.count() == 0:
+            return None
+        return int(round(
+            number=instance.reviews.aggregate(Avg('score'))['score__avg'],
+            ndigits=0
+        ))
+
+
+class TitlePostSerializer(TitleBaseSerializer):
+    """Сериализатор для post-запросов модели Title."""
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(),
+        slug_field='slug',
+        many=True
+    )
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field='slug',
+    )
 
     def create(self, validated_data):
         if 'genre' not in self.initial_data:
@@ -127,25 +127,11 @@ class TitleSerializer(serializers.ModelSerializer):
                 genre=current_genre, title=title)
         return title
 
-    def get_rating(self, instance):
-        if instance.reviews.count() == 0:
-            return None
-        return int(round(
-            number=instance.reviews.aggregate(Avg('score'))['score__avg'],
-            ndigits=0
-        ))
 
-    def validate_name(self, value):
-        if len(value) > 256:
-            raise serializers.ValidationError(
-                "Поле name длиннее 256 символов")
-        return value
-
-    def validate_year(self, value):
-        if value > datetime.datetime.now().year:
-            raise serializers.ValidationError(
-                "Указанный год еще не наступил")
-        return value
+class TitleGetSerializer(TitleBaseSerializer):
+    """Сериализатор для get-запросов модели Title."""
+    genre = GenreSerializer(many=True)
+    category = CategorySerializer()
 
 
 class ReviewSerializer(serializers.ModelSerializer):
