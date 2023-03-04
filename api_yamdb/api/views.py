@@ -50,7 +50,26 @@ class UserCreateViewSet(CreateViewSet):
     def create(self, request):
         serializer = UserCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user, _ = User.objects.get_or_create(**serializer.validated_data)
+
+        try:
+            user_by_email = User.objects.get(email=serializer.validated_data['email'])
+        except User.DoesNotExist:
+            user_by_email = None
+
+        try:
+            user_by_name = User.objects.get(username=serializer.validated_data['username'])
+        except User.DoesNotExist:
+            user_by_name = None
+
+        if user_by_email is None and user_by_name is None:
+            user = User.objects.create(
+                email=serializer.validated_data['email'],
+                username=serializer.validated_data['username'])
+        elif user_by_email == user_by_name:
+            user = user_by_email
+        elif user_by_email is None or user_by_name is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
         confirmation_code = default_token_generator.make_token(user)
         send_confirmation_code(
             email=user.email, confirmation_code=confirmation_code
