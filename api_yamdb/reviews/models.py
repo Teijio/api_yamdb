@@ -22,6 +22,7 @@ class ReviewBaseModel(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['id']
 
 
 class GenreCategoryBaseModel(models.Model):
@@ -44,6 +45,7 @@ class GenreCategoryBaseModel(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['id']
 
 
 class Genre(GenreCategoryBaseModel):
@@ -86,6 +88,9 @@ class Title(models.Model):
         verbose_name="Категории произведения",
     )
 
+    class Meta:
+        ordering = ['id']
+
     def __str__(self):
         return f"{self.name}"
 
@@ -126,6 +131,7 @@ class Review(ReviewBaseModel):
         verbose_name = "Отзыв"
         verbose_name_plural = "Отзывы"
         unique_together = ('title', 'author')
+        ordering = ['id']
 
     def __str__(self):
         return f"{self.text[:LENGTH_TEXT]}"
@@ -150,6 +156,7 @@ class Comment(ReviewBaseModel):
     class Meta:
         verbose_name = "Комментарий"
         verbose_name_plural = "Комментарии"
+        ordering = ['id']
 
     def __str__(self):
         return f"{self.text[:LENGTH_TEXT]}"
