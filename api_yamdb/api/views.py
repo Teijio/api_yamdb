@@ -167,9 +167,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         title = self.get_parent_title()
-        serializer.save(
-            author=self.request.user,
-            title=title)
+        serializer.save(author=self.request.user, title=title)
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:

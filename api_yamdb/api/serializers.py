@@ -37,25 +37,15 @@ class UserSerializer(serializers.ModelSerializer):
         )
         model = User
 
-    def validate_username(self, username):
-        if username == "me":
-            raise serializers.ValidationError("Использовать имя me запрещено")
-        return username
-
 
 class UserCreateSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=254, required=True)
     username = serializers.RegexField(regex=r"^[\w.@+-]+\Z", max_length=150)
 
-    def validate_username(self, value):
-        if value.lower() == "me":
+    def validate_username(self, username):
+        if username.lower() == "me":
             raise serializers.ValidationError("Использовать имя me запрещено")
-        return value
-
-    # def validate_email(self, email):
-    #     if User.objects.filter(email=email).exists():
-    #         raise serializers.ValidationError("Выберите другой email")
-    #     return email
+        return username
 
 
 class CategorySerializer(serializers.ModelSerializer):
