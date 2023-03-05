@@ -1,19 +1,11 @@
+import datetime
+
 from django.contrib.auth import get_user_model
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-
 from rest_framework import serializers
 
-from reviews.models import (
-    Title,
-    Category,
-    Genre,
-    Review,
-    Comment,
-    GenreTitle,
-)
-import datetime
-
+from reviews.models import Category, Comment, Genre, GenreTitle, Review, Title
 
 User = get_user_model()
 

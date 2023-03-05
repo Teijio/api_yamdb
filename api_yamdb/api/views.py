@@ -1,43 +1,36 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from django_filters.rest_framework import DjangoFilterBackend
 
-from .serializers import (
-    TokenSerializer,
-    UserCreateSerializer,
-    UserSerializer,
-    TitlePostSerializer,
-    TitleGetSerializer,
-    CategorySerializer,
-    GenreSerializer,
-    ReviewSerializer,
-    CommentSerializer,
-)
-from reviews.models import (
-    Title,
-    Category,
-    Genre,
-    Review,
-)
+from .filters import TitleFilter
 from .mixins import (
     CreateViewSet,
-    # CreateListViewSet,
     ModelViewSetWithoutRetrieve,
 )
-from .utils import send_confirmation_code
 from .permissions import (
     AdminOnly,
     AuthorOrModeratorOrAdmin,
-    # IsAuthor,
     ReadOnly,
 )
-from .filters import TitleFilter
+from .serializers import (
+    CategorySerializer,
+    CommentSerializer,
+    GenreSerializer,
+    ReviewSerializer,
+    TitleGetSerializer,
+    TitlePostSerializer,
+    TokenSerializer,
+    UserCreateSerializer,
+    UserSerializer,
+)
+from .utils import send_confirmation_code
+from reviews.models import Category, Genre, Review, Title
 
 User = get_user_model()
 
@@ -52,19 +45,24 @@ class UserCreateViewSet(CreateViewSet):
         serializer.is_valid(raise_exception=True)
 
         try:
-            user_by_email = User.objects.get(email=serializer.validated_data['email'])
+            user_by_email = User.objects.get(
+                email=serializer.validated_data["email"]
+            )
         except User.DoesNotExist:
             user_by_email = None
 
         try:
-            user_by_name = User.objects.get(username=serializer.validated_data['username'])
+            user_by_name = User.objects.get(
+                username=serializer.validated_data["username"]
+            )
         except User.DoesNotExist:
             user_by_name = None
 
         if user_by_email is None and user_by_name is None:
             user = User.objects.create(
-                email=serializer.validated_data['email'],
-                username=serializer.validated_data['username'])
+                email=serializer.validated_data["email"],
+                username=serializer.validated_data["username"],
+            )
         elif user_by_email == user_by_name:
             user = user_by_email
         elif user_by_email is None or user_by_name is None:

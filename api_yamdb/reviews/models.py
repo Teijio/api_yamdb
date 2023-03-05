@@ -1,7 +1,7 @@
-from django.db import models
-from django.core import validators
 from django.contrib.auth import get_user_model
+from django.core import validators
 from django.core.validators import RegexValidator
+from django.db import models
 
 from api_yamdb.settings import LENGTH_TEXT
 
@@ -22,10 +22,12 @@ class ReviewBaseModel(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ['id']
+        ordering = ["id"]
 
 
 class GenreCategoryBaseModel(models.Model):
+    """Абстрактная базовая модель для Genre и Category."""
+
     name = models.CharField(
         max_length=256,
         db_index=True,
@@ -45,7 +47,7 @@ class GenreCategoryBaseModel(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ['id']
+        ordering = ["id"]
 
 
 class Genre(GenreCategoryBaseModel):
@@ -89,7 +91,7 @@ class Title(models.Model):
     )
 
     class Meta:
-        ordering = ['id']
+        ordering = ["id"]
 
     def __str__(self):
         return f"{self.name}"
@@ -130,8 +132,8 @@ class Review(ReviewBaseModel):
     class Meta:
         verbose_name = "Отзыв"
         verbose_name_plural = "Отзывы"
-        unique_together = ('title', 'author')
-        ordering = ['id']
+        unique_together = ("title", "author")
+        ordering = ("-pub_date",)
 
     def __str__(self):
         return f"{self.text[:LENGTH_TEXT]}"
@@ -156,7 +158,7 @@ class Comment(ReviewBaseModel):
     class Meta:
         verbose_name = "Комментарий"
         verbose_name_plural = "Комментарии"
-        ordering = ['id']
+        ordering = ("-pub_date",)
 
     def __str__(self):
         return f"{self.text[:LENGTH_TEXT]}"

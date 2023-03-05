@@ -1,7 +1,6 @@
 import os
-from pathlib import Path
 from datetime import timedelta
-
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -121,13 +120,13 @@ SIMPLE_JWT = {
 
 
 LENGTH_TEXT = 20
-USERS_PER_PAGE = 20
+LIST_PER_PAGE = 20
 
 EMAIL_YAMDB = "yamdb_registration_confirm@mail.ru"
 
 # EMAIL_HOST = "smtp.mail.ru"
 # EMAIL_PORT = 2525
 # EMAIL_HOST_USER = EMAIL_YAMDB
-# EMAIL_HOST_PASSWORD = "G75JwanJi7iatbQBHSVu"
+# EMAIL_HOST_PASSWORD = "*********"
 # EMAIL_USE_TLS = True
 # EMAIL_USE_SSL = False

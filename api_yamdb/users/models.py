@@ -35,12 +35,6 @@ class User(AbstractUser):
         blank=False,
         verbose_name="Электронный почтовый ящик",
     )
-    first_name = models.CharField(
-        max_length=150, verbose_name="Имя", blank=True
-    )
-    last_name = models.CharField(
-        max_length=150, verbose_name="Фамилия", blank=True
-    )
     bio = models.TextField(
         blank=True,
         verbose_name="Описание пользователя",

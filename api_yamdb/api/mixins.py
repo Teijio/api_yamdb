@@ -1,7 +1,5 @@
 from rest_framework import mixins, viewsets
-from rest_framework.viewsets import (
-    GenericViewSet,
-)
+from rest_framework.viewsets import GenericViewSet
 
 
 class CreateViewSet(mixins.CreateModelMixin, GenericViewSet):
