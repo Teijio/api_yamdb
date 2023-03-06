@@ -38,5 +38,10 @@ python manage.py load_csv_data
 Выполните команду:
 python manage.py runserver
 ## Примеры запросов API ##
-Все примеры запросов указаны в документации по адресу http://127.0.0.1:8000/redoc/
+Регистрация пользователя:
+POST /api/v1/auth/signup/
+Активация пользователя:
+POST /api/v1/auth/token/
+Получение данных своей учетной записи:
+GET /api/v1/users/me/
 
