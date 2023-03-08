@@ -1,23 +1,22 @@
+from django.db.models import Avg
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+from reviews.models import Category, Genre, Review, Title
 
 from .filters import TitleFilter
-from .mixins import (
-    CreateViewSet,
-    ModelViewSetWithoutRetrieve,
-)
-from .permissions import (
-    AdminOnly,
-    AuthorOrModeratorOrAdmin,
-    ReadOnly,
-)
+from .mixins import CreateViewSet, ModelViewSetWithoutRetrieve
+from .permissions import AdminOnly, AuthorOrModeratorOrAdmin, ReadOnly
 from .serializers import (
     CategorySerializer,
     CommentSerializer,
@@ -30,49 +29,31 @@ from .serializers import (
     UserSerializer,
 )
 from .utils import send_confirmation_code
-from reviews.models import Category, Genre, Review, Title
 
 User = get_user_model()
 
 
-class UserCreateViewSet(CreateViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserCreateSerializer
-    permission_classes = (permissions.AllowAny,)
+# class UserCreateViewSet(CreateViewSet):
+#     pass
 
-    def create(self, request):
-        serializer = UserCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
 
-        try:
-            user_by_email = User.objects.get(
-                email=serializer.validated_data["email"]
-            )
-        except User.DoesNotExist:
-            user_by_email = None
-
-        try:
-            user_by_name = User.objects.get(
-                username=serializer.validated_data["username"]
-            )
-        except User.DoesNotExist:
-            user_by_name = None
-
-        if user_by_email is None and user_by_name is None:
-            user = User.objects.create(
-                email=serializer.validated_data["email"],
-                username=serializer.validated_data["username"],
-            )
-        elif user_by_email == user_by_name:
-            user = user_by_email
-        elif user_by_email is None or user_by_name is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-        confirmation_code = default_token_generator.make_token(user)
-        send_confirmation_code(
-            email=user.email, confirmation_code=confirmation_code
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def get_confirmation_code(request):
+    """Получить код подтверждения на указанный email"""
+    serializer = UserCreateSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    email = serializer.validated_data.get("email")
+    username = serializer.validated_data.get("username")
+    try:
+        user, exist = User.objects.get_or_create(
+            username=username, email=email, is_active=False
         )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception:
+        return Response(request.data, status=status.HTTP_400_BAD_REQUEST)
+    confirmation_code = default_token_generator.make_token(user)
+    send_confirmation_code(email, confirmation_code)
+    return Response(request.data, status=status.HTTP_200_OK)
 
 
 class TokenReceiveViewSet(CreateViewSet):
@@ -138,6 +119,12 @@ class TitleViewSet(viewsets.ModelViewSet):
             return TitleGetSerializer
         return TitlePostSerializer
 
+    def get_queryset(self):
+        queryset = Title.objects.all()
+        if self.action in ["list", "retrieve"]:
+            queryset = Title.objects.annotate(rating=Avg("reviews__score"))
+        return queryset
+
 
 class CategoryViewSet(ModelViewSetWithoutRetrieve):
     permission_classes = [ReadOnly | AdminOnly]
@@ -159,12 +146,13 @@ class GenreViewSet(ModelViewSetWithoutRetrieve):
         if self.action == "list":
             permission_classes = [AllowAny]
         else:
-            permission_classes = [IsAuthenticated, AdminOnly]
+            permission_classes = [AdminOnly]
         return [permission() for permission in permission_classes]
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, AuthorOrModeratorOrAdmin]
 
     def get_parent_title(self):
         return get_object_or_404(Title, pk=int(self.kwargs.get("title_id")))
@@ -186,18 +174,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
         title = self.get_parent_title()
         serializer.save(author=self.request.user, title=title)
 
-    def get_permissions(self):
-        if self.action in ["list", "retrieve"]:
-            permission_classes = [AllowAny]
-        elif self.action == "create":
-            permission_classes = [IsAuthenticated]
-        else:
-            permission_classes = [IsAuthenticated, AuthorOrModeratorOrAdmin]
-        return [permission() for permission in permission_classes]
-
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, AuthorOrModeratorOrAdmin]
 
     def get_parent_review(self):
         title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
@@ -212,12 +192,3 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         review = self.get_parent_review()
         serializer.save(author=self.request.user, review=review)
-
-    def get_permissions(self):
-        if self.action in ["list", "retrieve"]:
-            permission_classes = [AllowAny]
-        elif self.action == "create":
-            permission_classes = [IsAuthenticated]
-        else:
-            permission_classes = [IsAuthenticated, AuthorOrModeratorOrAdmin]
-        return [permission() for permission in permission_classes]

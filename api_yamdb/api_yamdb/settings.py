@@ -1,10 +1,18 @@
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "p&l%385148kslhtyn^##a1)ilz@4zqj=rq&agdol^##zgl9(vs"
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+if not SECRET_KEY:
+    raise sys.exit(f"Секретный ключ отсутствует.")
 
 DEBUG = True
 
@@ -82,7 +90,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "ru-RU"
 
 TIME_ZONE = "UTC"
 
@@ -98,7 +106,6 @@ STATICFILES_DIRS = ((BASE_DIR / "static/"),)
 
 AUTH_USER_MODEL = "users.User"
 
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_emails")
 
@@ -109,7 +116,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 5,
 }
 
@@ -122,11 +129,8 @@ SIMPLE_JWT = {
 LENGTH_TEXT = 20
 LIST_PER_PAGE = 20
 
-EMAIL_YAMDB = "yamdb_registration_confirm@mail.ru"
+USER = "user"
+MODERATOR = "moderator"
+ADMIN = "admin"
 
-# EMAIL_HOST = "smtp.mail.ru"
-# EMAIL_PORT = 2525
-# EMAIL_HOST_USER = EMAIL_YAMDB
-# EMAIL_HOST_PASSWORD = "*********"
-# EMAIL_USE_TLS = True
-# EMAIL_USE_SSL = False
+EMAIL_YAMDB = "yamdb_registration_confirm@mail.ru"

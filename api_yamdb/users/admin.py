@@ -1,7 +1,8 @@
+from django.conf import settings
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 
-from api_yamdb.settings import LIST_PER_PAGE
-from .models import User
+User = get_user_model()
 
 
 @admin.register(User)
@@ -19,6 +20,6 @@ class UserAdmin(admin.ModelAdmin):
     )
     list_editable = ("role",)
     list_filter = ("username",)
-    list_per_page = LIST_PER_PAGE
+    list_per_page = settings.LIST_PER_PAGE
     search_fields = ("username", "role")
     empty_value_display = "-пусто-"

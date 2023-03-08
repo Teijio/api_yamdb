@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
@@ -11,26 +12,9 @@ class User(AbstractUser):
         ("moderator", "Модератор"),
         ("admin", "Администратор"),
     )
-    user = "user"
-    moderator = "moderator"
-    admin = "admin"
-    username = models.CharField(
-        max_length=150,
-        unique=True,
-        db_index=True,
-        blank=False,
-        verbose_name="Имя пользователя",
-        validators=[
-            RegexValidator(
-                regex=r"^[\w.@+-]+$",
-                message="Имя пользователя содержит недопустимый символ",
-            ),
-        ],
-    )
     email = models.EmailField(
         max_length=254,
         unique=True,
-        blank=False,
         verbose_name="Электронный почтовый ящик",
     )
     bio = models.TextField(
@@ -38,7 +22,7 @@ class User(AbstractUser):
         verbose_name="Описание пользователя",
     )
     role = models.CharField(
-        default=user,
+        default=settings.USER,
         max_length=20,
         choices=ROLES,
         verbose_name="Тип учетной записи",
@@ -52,19 +36,15 @@ class User(AbstractUser):
                 fields=("username", "email"), name="unique_user"
             )
         ]
-        ordering = ("id",)
+        ordering = ("username",)
 
     def __str__(self):
         return self.username
 
     @property
-    def is_user(self):
-        return self.role == self.user
-
-    @property
     def is_moderator(self):
-        return self.role == self.moderator
+        return self.role == settings.MODERATOR
 
     @property
     def is_admin(self):
-        return self.role == self.admin
+        return self.role == settings.ADMIN or self.is_superuser

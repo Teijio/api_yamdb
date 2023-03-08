@@ -1,7 +1,6 @@
+from django.conf import settings
 from django.contrib import admin
 from reviews.models import Category, Comment, Genre, GenreTitle, Review, Title
-
-from api_yamdb.settings import LIST_PER_PAGE
 
 
 @admin.register(Category)
@@ -11,7 +10,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "slug")
     empty_value_display = "-пусто-"
     list_filter = ("name",)
-    list_per_page = LIST_PER_PAGE
+    list_per_page = settings.LIST_PER_PAGE
     search_fields = ("name",)
 
 
@@ -22,7 +21,7 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ("id", "author", "text", "pub_date", "review")
     empty_value_display = "-пусто-"
     list_filter = ("author", "pub_date")
-    list_per_page = LIST_PER_PAGE
+    list_per_page = settings.LIST_PER_PAGE
     search_fields = ("author",)
 
 
@@ -33,7 +32,7 @@ class GenreAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "slug")
     empty_value_display = "-пусто-"
     list_filter = ("name",)
-    list_per_page = LIST_PER_PAGE
+    list_per_page = settings.LIST_PER_PAGE
     search_fields = ("name",)
 
 
@@ -44,7 +43,7 @@ class GenreTitleAdmin(admin.ModelAdmin):
     list_display = ("id", "genre", "title")
     empty_value_display = "-пусто-"
     list_filter = ("genre",)
-    list_per_page = LIST_PER_PAGE
+    list_per_page = settings.LIST_PER_PAGE
     search_fields = ("title",)
 
 
@@ -55,7 +54,7 @@ class ReviewAdmin(admin.ModelAdmin):
     list_display = ("id", "author", "text", "score", "pub_date", "title")
     empty_value_display = "-пусто-"
     list_filter = ("author", "score", "pub_date")
-    list_per_page = LIST_PER_PAGE
+    list_per_page = settings.LIST_PER_PAGE
     search_fields = ("author",)
 
 
@@ -72,5 +71,5 @@ class TitleAdmin(admin.ModelAdmin):
     )
     empty_value_display = "-пусто-"
     list_filter = ("name",)
-    list_per_page = LIST_PER_PAGE
+    list_per_page = settings.LIST_PER_PAGE
     search_fields = ("name", "year", "category")

@@ -1,9 +1,10 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import validators
 from django.core.validators import RegexValidator
 from django.db import models
 
-from api_yamdb.settings import LENGTH_TEXT
+from .validators import validate_year
 
 User = get_user_model()
 
@@ -22,7 +23,7 @@ class ReviewBaseModel(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ["id"]
+        ordering = ("-id",)
 
 
 class GenreCategoryBaseModel(models.Model):
@@ -37,21 +38,20 @@ class GenreCategoryBaseModel(models.Model):
         unique=True,
         max_length=50,
         verbose_name="Идентификатор категории",
-        validators=[
-            RegexValidator(
-                regex=r"^[-a-zA-Z0-9_]+$",
-                message="Идентификатор содержит недопустимый символ",
-            ),
-        ],
     )
 
     class Meta:
         abstract = True
-        ordering = ["id"]
+        ordering = ("-id",)
 
 
 class Genre(GenreCategoryBaseModel):
     """Модель для жанров."""
+
+    class Meta:
+        verbose_name = "Жанр"
+        verbose_name_plural = "Жанры"
+        ordering = ("-id",)
 
     def __str__(self):
         return f"{self.slug}"
@@ -59,6 +59,11 @@ class Genre(GenreCategoryBaseModel):
 
 class Category(GenreCategoryBaseModel):
     """Модель для категорий."""
+
+    class Meta:
+        verbose_name = "Категория"
+        verbose_name_plural = "Категории"
+        ordering = ("-id",)
 
     def __str__(self):
         return f"{self.slug}"
@@ -73,13 +78,14 @@ class Title(models.Model):
     )
     year = models.IntegerField(
         verbose_name="Год издания произведения",
+        validators=[validate_year],
     )
     description = models.TextField(
         verbose_name="Описание произведения",
+        blank=True,
     )
     genre = models.ManyToManyField(
         Genre,
-        through="GenreTitle",
         verbose_name="Жанры произведения",
     )
     category = models.ForeignKey(
@@ -87,11 +93,12 @@ class Title(models.Model):
         on_delete=models.SET_NULL,
         related_name="titles",
         null=True,
+        blank=True,
         verbose_name="Категории произведения",
     )
 
     class Meta:
-        ordering = ["id"]
+        ordering = ("-id",)
 
     def __str__(self):
         return f"{self.name}"
@@ -123,8 +130,12 @@ class Review(ReviewBaseModel):
     score = models.IntegerField(
         default=0,
         validators=[
-            validators.MaxValueValidator(10),
-            validators.MinValueValidator(1),
+            validators.MaxValueValidator(
+                limit_value=10, message="Значение не должно быть больше 10"
+            ),
+            validators.MinValueValidator(
+                limit_value=1, message="Значение не должно быть меньше 1"
+            ),
         ],
         verbose_name="Оценка произведения",
     )
@@ -136,7 +147,7 @@ class Review(ReviewBaseModel):
         ordering = ("-pub_date",)
 
     def __str__(self):
-        return f"{self.text[:LENGTH_TEXT]}"
+        return f"{self.text[:settings.LENGTH_TEXT]}"
 
 
 class Comment(ReviewBaseModel):
@@ -158,7 +169,8 @@ class Comment(ReviewBaseModel):
     class Meta:
         verbose_name = "Комментарий"
         verbose_name_plural = "Комментарии"
+        unique_together = ("review", "author")
         ordering = ("-pub_date",)
 
     def __str__(self):
-        return f"{self.text[:LENGTH_TEXT]}"
+        return f"{self.text[:settings.LENGTH_TEXT]}"
