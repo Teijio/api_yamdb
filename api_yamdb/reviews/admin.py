@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib import admin
-from reviews.models import Category, Comment, Genre, GenreTitle, Review, Title
+from reviews.models import Category, Comment, Genre, Review, Title
 
 
 @admin.register(Category)
@@ -34,17 +34,6 @@ class GenreAdmin(admin.ModelAdmin):
     list_filter = ("name",)
     list_per_page = settings.LIST_PER_PAGE
     search_fields = ("name",)
-
-
-@admin.register(GenreTitle)
-class GenreTitleAdmin(admin.ModelAdmin):
-    """Настройка соответствия жанров и произведений."""
-
-    list_display = ("id", "genre", "title")
-    empty_value_display = "-пусто-"
-    list_filter = ("genre",)
-    list_per_page = settings.LIST_PER_PAGE
-    search_fields = ("title",)
 
 
 @admin.register(Review)

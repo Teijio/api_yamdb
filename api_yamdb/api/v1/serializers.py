@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from reviews.models import Category, Comment, Genre, GenreTitle, Review, Title
+from rest_framework.exceptions import ValidationError
+
+from reviews.models import Category, Comment, Genre, Review, Title
 
 User = get_user_model()
 
@@ -69,16 +70,6 @@ class TitlePostSerializer(serializers.ModelSerializer):
             "category",
         ]
 
-    # def create(self, validated_data):
-    #     if "genre" not in self.initial_data:
-    #         raise serializers.ValidationError("Поле genre не найдено")
-    #     genres = validated_data.pop("genre")
-    #     title = Title.objects.create(**validated_data)
-    #     for genre in genres:
-    #         current_genre = get_object_or_404(Genre, slug=genre)
-    #         GenreTitle.objects.create(genre=current_genre, title=title)
-    #     return title
-
 
 class TitleGetSerializer(serializers.ModelSerializer):
     """Сериализатор для get-запросов модели Title."""
@@ -110,6 +101,18 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ["id", "text", "author", "score", "pub_date"]
+
+    def validate(self, data):
+        request = self.context["request"]
+        author = request.user
+        title_id = self.context["view"].kwargs.get("title_id")
+        title = get_object_or_404(Title, pk=title_id)
+        if request.method == "POST":
+            if Review.objects.filter(title=title, author=author).exists():
+                raise ValidationError(
+                    "Вы не можете повторно оставить рецензию."
+                )
+        return data
 
 
 class CommentSerializer(serializers.ModelSerializer):

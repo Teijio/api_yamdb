@@ -7,9 +7,9 @@ from .views import (
     GenreViewSet,
     ReviewViewSet,
     TitleViewSet,
-    TokenReceiveViewSet,
-    get_confirmation_code,
     UserViewSet,
+    get_confirmation_code,
+    get_token,
 )
 
 router_v1 = routers.DefaultRouter()
@@ -29,12 +29,8 @@ router_v1.register(
 )
 
 auth_urls = [
-    path(
-        "signup/", get_confirmation_code, name="signup"
-    ),
-    path(
-        "token/", TokenReceiveViewSet.as_view({"post": "create"}), name="token"
-    ),
+    path("signup/", get_confirmation_code, name="signup"),
+    path("token/", get_token, name="token"),
 ]
 
 urlpatterns = [

@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import validators
-from django.core.validators import RegexValidator
 from django.db import models
 
 from .validators import validate_year
@@ -104,14 +103,6 @@ class Title(models.Model):
         return f"{self.name}"
 
 
-class GenreTitle(models.Model):
-    title = models.ForeignKey(Title, on_delete=models.CASCADE)
-    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"{self.title} {self.genre}"
-
-
 class Review(ReviewBaseModel):
     """Модель отзыва к произведениям Title."""
 
@@ -143,7 +134,11 @@ class Review(ReviewBaseModel):
     class Meta:
         verbose_name = "Отзыв"
         verbose_name_plural = "Отзывы"
-        unique_together = ("title", "author")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("title", "author"), name="unique_review"
+            )
+        ]
         ordering = ("-pub_date",)
 
     def __str__(self):

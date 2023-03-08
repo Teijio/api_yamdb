@@ -1,111 +1,79 @@
 import csv
+import os
 
-from django.core.management.base import BaseCommand
-from reviews.models import (Category, Comment, Genre, GenreTitle, Review,
-                            Title, User)
+from django.core.management import BaseCommand
+from django.db import IntegrityError
+
+from django.conf import settings
+from reviews.models import Category, Comment, Genre, Review, Title
+from users.models import User
+
+FILES_CLASSES = {
+    "category": Category,
+    "genre": Genre,
+    "titles": Title,
+    "users": User,
+    "review": Review,
+    "comments": Comment,
+}
+
+FIELDS = {
+    "category": ("category", Category),
+    "title_id": ("title", Title),
+    "genre_id": ("genre", Genre),
+    "author": ("author", User),
+    "review_id": ("review", Review),
+}
+
+
+def open_csv_file(file_name):
+    """Менеджер контекста для открытия csv-файлов."""
+    csv_file = file_name + ".csv"
+    csv_path = os.path.join(settings.CSV_FILES_DIR, csv_file)
+    try:
+        with open(csv_path, encoding="utf-8") as file:
+            return list(csv.reader(file))
+    except FileNotFoundError:
+        print(f"Файл {csv_file} не найден.")
+        return
+
+
+def change_foreign_values(data_csv):
+    """Изменяет значения."""
+    data_csv_copy = data_csv.copy()
+    for field_key, field_value in data_csv.items():
+        if field_key in FIELDS.keys():
+            field_key0 = FIELDS[field_key][0]
+            data_csv_copy[field_key0] = FIELDS[field_key][1].objects.get(
+                pk=field_value
+            )
+    return data_csv_copy
+
+
+def load_csv(file_name, class_name):
+    """Осуществляет загрузку csv-файлов."""
+    table_not_loaded = f"Таблица {class_name.__qualname__} не загружена."
+    table_loaded = f"Таблица {class_name.__qualname__} загружена."
+    data = open_csv_file(file_name)
+    rows = data[1:]
+    for row in rows:
+        data_csv = dict(zip(data[0], row))
+        data_csv = change_foreign_values(data_csv)
+        try:
+            table = class_name(**data_csv)
+            table.save()
+        except (ValueError, IntegrityError) as error:
+            print(
+                f"Ошибка в загружаемых данных. {error}. " f"{table_not_loaded}"
+            )
+            break
+    print(table_loaded)
 
 
 class Command(BaseCommand):
-    with open("static/data/genre.csv", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        next(reader)
-
-        for row in reader:
-            genre = Genre(
-                pk=row[0],
-                name=row[1],
-                slug=row[2],
-            )
-            genre.save()
-
-    with open("static/data/category.csv", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        next(reader)
-
-        for row in reader:
-            category = Category(
-                pk=row[0],
-                name=row[1],
-                slug=row[2],
-            )
-            category.save()
-
-    with open("static/data/titles.csv", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        next(reader)
-
-        for row in reader:
-            category, _ = Category.objects.get_or_create(pk=int(row[3]))
-            title = Title(
-                pk=row[0],
-                name=row[1],
-                year=row[2],
-                category=category,
-            )
-            title.save()
-
-    with open("static/data/genre_title.csv", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        next(reader)
-
-        for row in reader:
-            title, _ = Title.objects.get_or_create(pk=int(row[1]))
-            genre, _ = Genre.objects.get_or_create(pk=int(row[2]))
-            genre_title = GenreTitle(
-                pk=row[0],
-                title=title,
-                genre=genre,
-            )
-            genre_title.save()
-
-    with open("static/data/users.csv", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        next(reader)
-
-        for row in reader:
-            user = User(
-                pk=row[0],
-                username=row[1],
-                email=row[2],
-                role=row[3],
-                bio=row[4],
-                first_name=row[5],
-                last_name=row[6],
-            )
-            user.save()
-
-    with open("static/data/review.csv", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        next(reader)
-
-        for row in reader:
-            title, _ = Title.objects.get_or_create(pk=int(row[1]))
-            author, _ = User.objects.get_or_create(pk=int(row[3]))
-            review = Review(
-                pk=row[0],
-                title=title,
-                text=row[2],
-                author=author,
-                score=row[4],
-                pub_date=row[5],
-            )
-            review.save()
-
-    with open("static/data/comments.csv", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        next(reader)
-
-        for row in reader:
-            review, _ = Review.objects.get_or_create(pk=int(row[1]))
-            author, _ = User.objects.get_or_create(pk=int(row[3]))
-            comment = Comment(
-                pk=row[0],
-                review=review,
-                text=row[2],
-                author=author,
-                pub_date=row[4],
-            )
-            review.save()
+    """Класс загрузки тестовой базы данных."""
 
     def handle(self, *args, **options):
-        pass
+        for key, value in FILES_CLASSES.items():
+            print(f"Загрузка таблицы {value.__qualname__}")
+            load_csv(key, value)
