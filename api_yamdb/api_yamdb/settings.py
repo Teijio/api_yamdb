@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 if not SECRET_KEY:
-    raise sys.exit(f"Секретный ключ отсутствует.")
+    raise sys.exit("Секретный ключ отсутствует.")
 
 DEBUG = True
 
