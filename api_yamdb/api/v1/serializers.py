@@ -31,20 +31,6 @@ class UserSerializer(serializers.ModelSerializer):
         return username
 
 
-# class UserCreateSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         fields = (
-#             "username",
-#             "email",
-#         )
-#         model = User
-
-#     def validate_username(self, username):
-#         if username.lower() == "me":
-#             raise serializers.ValidationError("Использовать имя me запрещено")
-#         return username
-
-
 class UserCreateSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=254)
     username = serializers.RegexField(regex=r"^[\w.@+-]+\Z", max_length=150)
