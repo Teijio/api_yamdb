@@ -98,7 +98,6 @@ class UserViewSet(ModelViewSetWithoutPut):
 
 class TitleViewSet(ModelViewSetWithoutPut):
     permission_classes = (AdminOnlyOrReadOnly,)
-    queryset = Title.objects.all()
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
@@ -107,10 +106,9 @@ class TitleViewSet(ModelViewSetWithoutPut):
         return TitlePostSerializer
 
     def get_queryset(self):
-        queryset = Title.objects.all()
         if self.action in ("list", "retrieve"):
-            queryset = Title.objects.annotate(rating=Avg("reviews__score"))
-        return queryset
+            return Title.objects.annotate(rating=Avg("reviews__score"))
+        return Title.objects.all()
 
 
 class CategoryViewSet(ModelViewSetWithoutRetrieve):

@@ -6,10 +6,13 @@ from django.db import models
 class User(AbstractUser):
     """Класс пользователей."""
 
+    USER = "user"
+    MODERATOR = "moderator"
+    ADMIN = "admin"
     ROLES = (
-        ("user", "Пользователь"),
-        ("moderator", "Модератор"),
-        ("admin", "Администратор"),
+        (USER, "Пользователь"),
+        (MODERATOR, "Модератор"),
+        (ADMIN, "Администратор"),
     )
     email = models.EmailField(
         max_length=254,
@@ -21,7 +24,7 @@ class User(AbstractUser):
         verbose_name="Описание пользователя",
     )
     role = models.CharField(
-        default=settings.USER,
+        default=USER,
         max_length=20,
         choices=ROLES,
         verbose_name="Тип учетной записи",

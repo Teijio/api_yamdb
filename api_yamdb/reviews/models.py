@@ -8,7 +8,7 @@ from .validators import validate_year
 User = get_user_model()
 
 
-class ReviewBaseModel(models.Model):
+class ReviewCommentBaseModel(models.Model):
     """Абстрактная базовая модель для Review и Comment."""
 
     text = models.TextField(
@@ -97,13 +97,15 @@ class Title(models.Model):
     )
 
     class Meta:
+        verbose_name = "Произведение"
+        verbose_name_plural = "Произведения"
         ordering = ("-id",)
 
     def __str__(self):
         return f"{self.name}"
 
 
-class Review(ReviewBaseModel):
+class Review(ReviewCommentBaseModel):
     """Модель отзыва к произведениям Title."""
 
     title = models.ForeignKey(
@@ -145,7 +147,7 @@ class Review(ReviewBaseModel):
         return f"{self.text[:settings.LENGTH_TEXT]}"
 
 
-class Comment(ReviewBaseModel):
+class Comment(ReviewCommentBaseModel):
     """Модель комментария к отзыву Review."""
 
     review = models.ForeignKey(
@@ -164,7 +166,11 @@ class Comment(ReviewBaseModel):
     class Meta:
         verbose_name = "Комментарий"
         verbose_name_plural = "Комментарии"
-        unique_together = ("review", "author")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("review", "author"), name="unique_comment"
+            )
+        ]
         ordering = ("-pub_date",)
 
     def __str__(self):
